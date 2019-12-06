@@ -17,8 +17,9 @@ def _get_credentials_interactively(flow, storage, get_code_callback):
     flow.redirect_uri = oauth2client.client.OOB_CALLBACK_URN
     authorize_url = flow.step1_get_authorize_url()
     code = get_code_callback(authorize_url)
+    h = httplib2.Http(".cache", disable_ssl_certificate_validation=True)
     if code:
-        credential = flow.step2_exchange(code, http=None)
+        credential = flow.step2_exchange(code, h)
         storage.put(credential)
         credential.set_store(storage)
         return credential
@@ -38,5 +39,5 @@ def get_resource(client_secrets_file, credentials_file, get_code_callback):
     storage = oauth2client.file.Storage(credentials_file)
     credentials = _get_credentials(flow, storage, get_code_callback)
     if credentials:
-        http = credentials.authorize(httplib2.Http())
+        http = credentials.authorize(httplib2.Http(disable_ssl_certificate_validation=True))
         return googleapiclient.discovery.build("youtube", "v3", http=http)
